@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "cross-env NODE_ENV=development node index.js"
   },
   "keywords": [
     "koa",
@@ -14,8 +14,12 @@
   "author": "jiangshanfan",
   "license": "ISC",
   "dependencies": {
+    "cross-env": "^6.0.3",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
-    "koa-router": "^7.4.0"
+    "koa-router": "^7.4.0",
+    "mime": "^2.4.4",
+    "mz": "^2.7.0",
+    "nunjucks": "^3.2.0"
   }
 }
