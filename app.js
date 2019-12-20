@@ -45,6 +45,93 @@ const controller = require('./controller');
 app.use(controller());
 
 
+/** ======================================================== MVC 模式 注入 结束 =========================================================== */
+
+
+
+/** ====================================================== 关联 MySQL 开始 ===========================================================*/
+const Sequelize = require('sequelize');
+
+const config = require('./config');
+
+console.log('init sequelize...');
+
+// 创建Sequelize实例，关联数据库
+var sequelize = new Sequelize(config.database, config.username, config.password, {
+  host: config.host,
+  dialect: 'mysql',
+  pool: {
+    max: 5,
+    min: 0,
+    idle: 30000
+  }
+});
+
+// 定义对象和关系数据库的映射
+var Student = sequelize.define('students', {
+  id: {
+    type: Sequelize.BIGINT(20),
+    autoIncrement: true,
+    primaryKey: true
+  },
+  class_id: Sequelize.BIGINT(20),
+  name: Sequelize.STRING(100),
+  gender: Sequelize.STRING(1),
+  score: Sequelize.INTEGER(11)
+}, {
+  timestamps: false
+});
+
+
+////使用then, catch方式解析Promise对象
+//Student.create({
+//  class_id: 2,
+//  name: 'Gaffey',
+//  gender: 'F',
+//  score: 93,
+//}).then(function (p) {
+//  console.log('created.' + JSON.stringify(p));
+//}).catch(function (err) {
+//  console.log('failed: ' + err);
+//});
+
+
+// 调用Sequelize定义的映射关系对象 Student，新增数据，当前是自执行，可以封装成方法调用
+(async () => {
+  var sam = await Student.create({
+    class_id: 1,
+    name: 'sam',
+    gender: 'M',
+    score: 91
+  });
+  console.log('created: ' + JSON.stringify(sam));
+})();
+
+
+// “删、改”数据需要先“查”数据，然后再通过save()以及destroy()方法进行操作
+(async () => {
+  var students = await Student.findAll({
+    where: {
+      name: 'Gaffey'
+    }
+  });
+  console.log(`find ${students.length} students:`);
+  for (let p of students) {
+    console.log(JSON.stringify(p));
+    console.log('update student...');
+    p.gender = 'M';
+    p.score = 100;
+    p.version++;
+    await p.save();
+    if (p.version === 3) {
+      await p.destroy();
+      console.log(`${p.name} was destroyed.`);
+    }
+  }
+})();
+/** ================================================= 关联 MySQL 结束 ========================================================= */
+
+
 /*app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
   await next();
@@ -74,7 +161,9 @@ app.use(async (ctx, next) => {
   ctx.response.body = '<h1>Hello, koa2!</h1>';
 });*/
 
-// 在端口9000监听:
+
+
+/** ========================================================= 在端口9000监听: ================================================*/
 // 特别地，注意6000等端口不可以作为端口
 var server = app.listen(9002, function () {
 
