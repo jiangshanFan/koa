@@ -1,11 +1,19 @@
 // 为了统一建立Model，创建关系数据库和对象之间的映射关系
 const Sequelize = require('sequelize');
 
+const uuid = require('node-uuid');
+
+const config = require('./config');
+
 console.log('init sequelize...');
 
-var sequelize = new Sequelize('dbname', 'username', 'password', {
-  host: '10.9.1.84',
-  dialect: 'mysql',
+function generateId() {
+  return uuid.v4();
+}
+console.log(config);
+var sequelize = new Sequelize(config.database, config.username, config.password, {
+  host: config.host,
+  dialect: config.dialect,
   pool: {
     max: 5,
     min: 0,
@@ -33,22 +41,46 @@ function defineModel(name, attributes) {
     }
   }
 
-  attrs.id = {
-    type: ID_TYPE,
-    primaryKey: true
-  };
-  attrs.createdAt = {
-    type: Sequelize.BIGINT,
-    allowNull: false
-  };
-  attrs.updatedAt = {
-    type: Sequelize.BIGINT,
-    allowNull: false
-  };
-  attrs.version = {
-    type: Sequelize.BIGINT,
-    allowNull: false
-  };
+  //attrs.u_id = {
+  //  type: ID_TYPE,
+  //  allowNull: false
+  //};
+  //attrs.createdAt = {
+  //  type: Sequelize.BIGINT,
+  //  allowNull: false
+  //};
+  //attrs.updatedAt = {
+  //  type: Sequelize.BIGINT,
+  //  allowNull: false
+  //};
+  //attrs.version = {
+  //  type: Sequelize.BIGINT,
+  //  allowNull: false
+  //};
+
+  // 打印当前对象和关系数据库表的映射关系
+  console.log('model defined for table: ' + name + '\n' + JSON.stringify(attrs, function (k, v) {
+    if (k === 'type') {
+      for (let key in Sequelize) {
+        if (key === 'ABSTRACT' || key === 'NUMBER') {
+          continue;
+        }
+        let dbType = Sequelize[key];
+        if (typeof dbType === 'function') {
+          if (v instanceof dbType) {
+            if (v._length) {
+              return `${dbType.key}(${v._length})`;
+            }
+            return dbType.key;
+          }
+          if (v === dbType) {
+            return dbType.key;
+          }
+        }
+      }
+    }
+    return v;
+  }, '  '));
 
   // 返回映射关系, name 是数据库对应的表名
   return sequelize.define(name, attrs, {
@@ -60,9 +92,9 @@ function defineModel(name, attributes) {
       beforeValidate: function (obj) {
         let now = Date.now();
         if (obj.isNewRecord) {
-          if (!obj.id) {
-            // generateId()函数
-            obj.id = generateId();
+          if (!obj.u_id) {
+            // generateId()函数是 node-uuid 模块生成的 UID 唯一标识
+            obj.u_id = generateId();
           }
           obj.createdAt = now;
           obj.updatedAt = now;
@@ -75,3 +107,28 @@ function defineModel(name, attributes) {
     }
   });
 }
+ 
+
+var exp = {
+  defineModel: defineModel,
+  sync: () => {
+    // only allow create ddl in non-production environment
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(process.env.NODE_ENV);
+      sequelize.sync({ force: true });
+    } else {
+      throw new Error('Cannot sync() when NODE_ENV is set to \'production\'.');
+    }
+  }
+};
+
+// 对应 db.js 中的类型定义和 Sequelize 的类型对应
+const TYPES = ['STRING', 'INTEGER', 'BIGINT', 'TEXT', 'DOUBLE', 'DATEONLY', 'BOOLEAN'];
+for (let type of TYPES) {
+  exp[type] = Sequelize[type];
+}
+
+exp.ID = ID_TYPE;
+exp.generateId = generateId;
+
+module.exports = exp;

@@ -18,6 +18,7 @@ for (let f of js_files) {
   module.exports[name] = require(__dirname + '/models/' + f);
 }
 
+// Sequelize 提供了一个 sync() 方法，可以自动创建数据库
 module.exports.sync = () => {
   db.sync();
 };

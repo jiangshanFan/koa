@@ -30,10 +30,10 @@ app.use(bodyParser());
 
 
 // 第四个middleware 导入Nunjucks模板引擎，给ctx“安装”一个render()函数
-const templating = require('./templating');
+const view = require('./view');
 //注意：生产环境上必须配置环境变量NODE_ENV = 'production'，而开发环境不需要配置，实际上NODE_ENV可能是undefined，所以判断的时候，不要用NODE_ENV === 'development'。
 const isProduction = process.env.NODE_ENV === 'production';
-app.use(templating('views', {
+app.use(view('views', {
   noCache: !isProduction,
   watch: !isProduction
 }));
@@ -44,13 +44,12 @@ const controller = require('./controller');
 // 使用controller
 app.use(controller());
 
-
-/** ======================================================== MVC 模式 注入 结束 =========================================================== */
-
+/** ======================================================== MVC模式注入结束 =========================================================== */
 
 
-/** ====================================================== 关联 MySQL 开始 ===========================================================*/
-const Sequelize = require('sequelize');
+/** ====================================================== 关联MySQL开始 ===========================================================*/
+
+/*const Sequelize = require('sequelize');
 
 const config = require('./config');
 
@@ -80,27 +79,31 @@ var Student = sequelize.define('students', {
   score: Sequelize.INTEGER(11)
 }, {
   timestamps: false
-});
+});*/
 
 
-////使用then, catch方式解析Promise对象
-//Student.create({
-//  class_id: 2,
-//  name: 'Gaffey',
-//  gender: 'F',
-//  score: 93,
-//}).then(function (p) {
-//  console.log('created.' + JSON.stringify(p));
-//}).catch(function (err) {
-//  console.log('failed: ' + err);
-//});
+/** 导入所有的 models 文件夹中的 Model */
+const model = require('./model');
+// 创建 students 表对应的 Model
+let Student = model.students;
 
+/*//使用then, catch方式解析Promise对象
+Student.create({
+  class_id: 2,
+  name: 'Gaffey',
+  gender: 'F',
+  score: 93,
+}).then(function (p) {
+  console.log('created.' + JSON.stringify(p));
+}).catch(function (err) {
+  console.log('failed: ' + err);
+});*/
 
 // 调用Sequelize定义的映射关系对象 Student，新增数据，当前是自执行，可以封装成方法调用
 (async () => {
-  var sam = await Student.create({
+  var lisa = await Student.create({
     class_id: 1,
-    name: 'sam',
+    name: 'lisa',
     gender: 'M',
     score: 91
   });
@@ -112,14 +115,14 @@ var Student = sequelize.define('students', {
 (async () => {
   var students = await Student.findAll({
     where: {
-      name: 'Gaffey'
+      name: 'lisa'
     }
   });
   console.log(`find ${students.length} students:`);
   for (let p of students) {
     console.log(JSON.stringify(p));
     console.log('update student...');
-    p.gender = 'M';
+    p.gender = 'F';
     p.score = 100;
     p.version++;
     await p.save();
@@ -129,9 +132,11 @@ var Student = sequelize.define('students', {
     }
   }
 })();
-/** ================================================= 关联 MySQL 结束 ========================================================= */
+
+/** ================================================= 关联MySQL结束 ========================================================= */
 
 
+/** ======================================================== app.use 的使用开始 ========================================================= */
 /*app.use(async (ctx, next) => {
   console.log(`${ctx.request.method} ${ctx.request.url}`);
   await next();
@@ -147,14 +152,18 @@ app.use(async (ctx, next) => {
 // 对于任何请求，app将调用该异步函数处理请求：
 // Since path defaults to “/”, middleware mounted without a path will be executed for every request to the app.
 // 此外，如果一个middleware没有调用await next() ，会怎么办？答案是后续的middleware将不再执行了。这种情况也很常见，
-//例如，一个检测用户权限的middleware可以决定是否继续处理请求，还是直接返回403错误：
-//app.use(async (ctx, next) => {
-//  if (await checkUserPermission(ctx)) {
-//    await next();
-//  } else {
-//    ctx.response.status = 403;
-//  }
-//});
+// 例如，一个检测用户权限的middleware可以决定是否继续处理请求，还是直接返回403错误：
+
+/*app.use(async (ctx, next) => {
+  if (await checkUserPermission(ctx)) {
+    await next();
+  } else {
+    ctx.response.status = 403;
+  }
+});*/
+
+
+// http测试，端到端的HTTP自动化测试时使用的简单代码，需要注释上面的模板引擎 view.js 以及 控制器 controller.js
 /*app.use(async (ctx, next) => {
   await next();
   ctx.response.type = 'text/html';
@@ -162,13 +171,15 @@ app.use(async (ctx, next) => {
 });*/
 
 
+/** ========================================================= app.js只负责创建app实例，不监听端口 ================================================*/
+module.exports = app;
 
 /** ========================================================= 在端口9000监听: ================================================*/
 // 特别地，注意6000等端口不可以作为端口
-var server = app.listen(9002, function () {
+//var server = app.listen(9002, function () {
 
-  var host = server.address().address;
-  var port = server.address().port;
+//  var host = server.address().address;
+//  var port = server.address().port;
 
-  console.log('app started at http://%s:%s', host, port);
-});
+//  console.log('app started at http://%s:%s', host, port);
+//});

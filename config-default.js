@@ -1,5 +1,6 @@
 // MySQL简单的默认配置文件
 var config = {
+  dialect: 'mysql',
   database: 'database1', // 使用哪个数据库
   username: 'root', // 用户名
   password: 'ybsx#181119002', // 口令
