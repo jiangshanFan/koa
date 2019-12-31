@@ -14,11 +14,12 @@ function staticFiles(url, dir) {
     if (rpath.startsWith(url)) {
       // 获取文件完整路径
       // path.join() 方法使用平台特定的分隔符把全部给定的 path 片段连接到一起，并规范化生成的路径。会按照cd模式来执行生成的路径，Windows下默认是'\'
-      let fp = path.join(dir, rpath.substring(url.length));
+        let fp = path.join(dir, rpath.substring(url.length));
+        console.log(fp);
       // 判断文件是否存在
       if (await fs.exists(fp)) {
         // 查找文件的mime
-        ctx.response.type = mime.lookup(rpath);
+          ctx.response.type = mime.getType(rpath);
         // 读取文件内容并赋值给response.body
         ctx.response.body = await fs.readFile(fp);
       } else {
