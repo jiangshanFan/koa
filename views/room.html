@@ -51,7 +51,7 @@
       console.log(data);
       var msg = JSON.parse(data);
       if (msg.type === 'list') {
-        //vmUserList.users = msg.user;
+        vmUserList.users = msg.data;
       } else if (msg.type === 'join') {
         addToUserList(vmUserList.users, msg.user);
         addMessage(vmMessageList.messages, msg);
