@@ -53,6 +53,12 @@ app.use(view('views', {
 }));
 
 
+// bind .rest() for ctx: 处理 REST API
+const rest = require('./rest');
+// 执行 rest.restify() 返回一个异步回调函数，而app.use()会执行次函数，从而得到 ctx.rest()赋值
+app.use(rest.restify()); 
+
+
 // 第五个middleware 导入controller middleware，处理URL路由
 const controller = require('./controller');
 // 使用controller

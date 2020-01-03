@@ -1,0 +1,5 @@
+** REST （Representational State Transfer) 表述性状态转移  取代了复杂而笨重的SOAP， 成为Web API的标准
+
+** REST 是一种设计API的模式，最常用的数据格式是JSON
+
+** 
