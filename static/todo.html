@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="learn javascript by www.liaoxuefeng.com">
+  <title>Vue TODO</title>
+  <link rel="stylesheet" href="/static/css/bootstrap.css">
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/vue.min.js"></script>
+  <!-- Vue Ҫʵ���첽������Ҫʹ�õ� vue-resource �⣬2.0�����ϰ汾�Ƽ�ʹ�� axios ����� ajax ���� -->
+  <!--<script src="https://cdn.jsdelivr.net/vue.resource/1.0.3/vue-resource.min.js"></script>-->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script>
+    // 在DOM加载完成后调用初始化，否则会造成无法获取#vm的节点元素
+    $(function () {
+      var vm = new Vue({
+        el: '#vm',
+        http: {
+          timeout: 5000
+        },
+        data: {
+          title: 'TODO List',
+          todos: [],
+          loading: false
+        },
+        created: function () {
+          this.init();
+        },
+        methods: {
+          init: function () {
+            var that = this;
+            that.loading = true;
+            axios.get('/api/todos').then(function (resp) {
+              that.loading = false;
+              console.log(resp);
+              that.todos = resp.data.todos;
+            }).catch(function (error) {
+              console.log(error);
+            });
+          },
+          create: async function (todo) {
+            var that = this;
+            // Want to use async/await? Add the `async` keyword to your outer function/method.
+            try {
+              const response = await axios.post('/api/todos', todo);
+              console.log(response);
+              that.todos.push(response.data);
+              vmAdd.name = '';
+              vmAdd.description = '';
+            } catch (error) {
+              console.error(error);
+            }
+          },
+          update: async function (todo, prop, e) {
+            var t = {
+              name: todo.name,
+              description: todo.description
+            };
+            t[prop] = e.target.innerText;
+            if (t[prop] === todo[prop]) {
+              return;
+            }
+            
+            // Want to use async/await? Add the `async` keyword to your outer function/method.
+            try {
+              const resp = await axios.put('/api/todos/' + todo.id, t);
+              todo.name = resp.data.name;
+              todo.description = resp.data.description;
+              console.log(resp);
+            } catch (error) {
+              e.target.innerText = todo[prop];
+              console.error(error);
+            }
+          },
+          remove: async function (todo) {
+            var that = this;
+
+            // Want to use async/await? Add the `async` keyword to your outer function/method.
+            try {
+              const response = await axios.delete('/api/todos/' + todo.id);
+              /** 调用删除接口，修改数据库数据，同时在本地直接修改DOM结构，而不调用初始化接口刷新界面
+              var i, index = -1;
+              for (i = 0; i < that.todos.length; i++) {
+                if (that.todos[i].id === todo.id) {
+                  index = i;
+                  break;
+                }
+              }
+              if (index >= 0) {
+                that.todos.splice(index, 1);
+              }
+              */
+              that.init();
+              console.log(response);
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        }
+      });
+      window.vm = vm;
+      var vmAdd = new Vue({
+        el: '#vmAdd',
+        data: {
+          name: '',
+          description: ''
+        },
+        methods: {
+          submit: function () {
+            console.log(this.$data);
+
+            vm.create(this.$data);
+          }
+        }
+      });
+      window.vmAdd = vmAdd;
+    });
+  </script>
+</head>
+
+<body>
+  <header class="navbar navbar-static-top">
+    <div class="container">
+      <div class="navbar-header">
+        <a href="/" class="navbar-brand">Learn JavaScript</a>
+      </div>
+      <nav class="collapse navbar-collapse" id="bs-navbar">
+        <ul class="nav navbar-nav">
+          <li><a target="_blank" href="http://www.liaoxuefeng.com/">Get Courses</a></li>
+          <li><a target="_blank" href="https://github.com/michaelliao/learn-javascript">Source Code</a></li>
+          <li><a target="_blank" href="http://getbootstrap.com/">Resource</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div id="important" style="color:#cdbfe3; background-color:#6f5499; padding:30px 0; margin:-20px 0 20px 0;">
+    <div class="container">
+      <h1 style="color:#fff; font-size:60px">Getting started</h1>
+      <p style="font-size:24px; line-height:48px">Learn JavaScript, Node.js, npm, koa2, Vue, babel, etc. at liaoxuefeng.com.</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title"><span class="glyphicon glyphicon-th-list"></span> MVVM</h3>
+          </div>
+          <div class="panel-body">
+            <div id="vm">
+              <h3>{{ title }}</h3>
+              <p v-if="loading">Loading...</p>
+              <ol>
+                <li v-for="t in todos">
+                  <dl>
+                    <!-- 用contenteditable="true"让DOM节点变成可编辑的，用v-on:blur="update(t, 'name', $event)"在编辑结束时调用update()方法并传入参数，特殊变量$event表示DOM事件本身。 -->
+                    <dt contenteditable="true" v-on:blur="update(t, 'name', $event)">{{ t.name }}</dt>
+                    <dd contenteditable="true" v-on:blur="update(t, 'description', $event)">{{ t.description }}</dd>
+                    <dd><a href="#0" v-on:click="remove(t)">Delete</a></dd>
+                  </dl>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title"><span class="glyphicon glyphicon-plus"></span> Add New Todo</h3>
+          </div>
+          <div class="panel-body">
+            <form id="vmAdd" action="#0" v-on:submit.prevent="submit">
+              <div class="form-group">
+                <label>Name:</label>
+                <input type="text" v-model="name" class="form-control" placeholder="Enter name">
+              </div>
+              <div class="form-group">
+                <label>Description:</label>
+                <input type="text" v-model="description" class="form-control" placeholder="Enter description">
+              </div>
+              <button type="submit" class="btn btn-default">Add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Get more courses...</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">JavaScript</h3>
+          </div>
+          <div class="panel-body">
+            <p>full-stack JavaScript course</p>
+            <p><a target="_blank" href="http://www.liaoxuefeng.com/wiki/001434446689867b27157e896e74d51a89c25cc8b43bdb3000">Read more</a></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Python</h3>
+          </div>
+          <div class="panel-body">
+            <p>the latest Python course</p>
+            <p><a target="_blank" href="http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000">Read more</a></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">git</h3>
+          </div>
+          <div class="panel-body">
+            <p>A course about git version control</p>
+            <p><a target="_blank" href="http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000">Read more</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="background-color:#ddd; padding: 20px 0;">
+    <div class="container">
+      <p>
+        <a target="_blank" href="http://www.liaoxuefeng.com">Website</a> -
+        <a target="_blank" href="https://github.com/michaelliao/learn-javascript">GitHub</a> -
+        <a target="_blank" href="http://weibo.com/liaoxuefeng">Weibo</a>
+      </p>
+      <p>This JavaScript course is created by <a target="_blank" href="http://weibo.com/liaoxuefeng">@��ѩ��</a>.</p>
+      <p>Code licensed <a target="_blank" href="https://github.com/michaelliao/learn-javascript/blob/master/LICENSE">Apache</a>.</p>
+    </div>
+  </footer>
+</body>
+
+</html>
