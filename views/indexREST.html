@@ -19,12 +19,14 @@ $(function () {
         }).done(function (r) {
           console.log(r);
           var i;
-          for (i=0; i<that.products.length; i++) {
-            if (that.products[i].id === r.id) {
-              that.products.splice(i, 1);
-              return;
+          r.forEach(item => {
+            for (i = 0; i < that.products.length; i++) {
+              if (that.products[i].id === item.id) {
+                that.products.splice(i, 1);
+                return;
+              }
             }
-          }
+          });
         }).fail(function (jqXHR, textStatus) {
            // Not 200:
           alert('Error: ' + jqXHR.status);
