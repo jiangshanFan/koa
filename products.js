@@ -7,26 +7,6 @@ const model = require('./model');
 
 let Product = model.products;
 
-var id = 0;
-
-function nextId() {
-  id++;
-  return 'p' + id;
-}
-
-function Products(name, manufacturer, price) {
-  this.id = nextId();
-  this.name = name;
-  this.manufacturer = manufacturer;
-  this.price = price;
-}
-
-var products = [
-  new Products('iPhone 7', 'Apple', 6800),
-  new Products('ThinkPad T440', 'Lenovo', 5999),
-  new Products('LBP2900', 'Canon', 1099)
-];
-
 module.exports = {
   getProducts: async (id) => {
     // 异步函数调用使用 async/await
@@ -40,7 +20,7 @@ module.exports = {
 
   createProduct: async (name, manufacturer, price) => {
     // create方法，添加记录
-    let res = await Product.create({ name: name, manufacturer: manufacturer, price: price });
+    let res = await Product.create({ name, manufacturer, price });
     console.log(JSON.stringify(res));
 
     let p = JSON.parse(JSON.stringify(res));
